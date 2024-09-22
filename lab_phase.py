@@ -17,7 +17,7 @@ import numpy as np
 import datetime
 import webbrowser
 import pyttsx3 as ttx #pour faire parler l'assistant
-import pywhatkit #pour aller sur youtube
+from pywhatkit import playonyt, search #pour aller sur youtube
 
 # Télécharger les ressources nécessaires
 nltk.download('punkt')
@@ -243,25 +243,28 @@ if page == "Classification":
     
     # Option de saisie de texte ou vocale
     option = st.selectbox("Choisissez la méthode de saisie :", ["Texte", "Vocale"])
-    user_input = ""
-
-    
-    if option == "Vocale":
+    user_input = " "
+    if option == "Texte":
+        user_input = st.text_input("Entrez votre texte ici :")
+        if st.button("Classer le text", key="classe_button"):                     
+            if user_input:
+                category = classify_text(classifier, user_input)
+                st.success(f"Le texte appartient à la catégorie : **{category}**")
+                st.balloons()
+            else:
+                st.write("Veuillez entrer un texte ou utiliser la commande vocale.")
+    elif option == "Vocale":
         if st.button("Utiliser le microphone", key="microphone_button"):
             user_input = recognize_speech()
             st.write(f"Texte reconnu : {user_input}")
-   
-    elif option == "Texte":
-        user_input = st.text_input("Entrez votre texte ici :")
-        
-       # Classer le texte, qu'il soit saisi ou vocal
-    if user_input:
-        if st.button("Classer le texte", key="classify_button"):
-            category = classify_text(classifier, user_input)
-            st.write(f"Le texte appartient à la catégorie : **{category}**")
-     
-        else:
-            st.write("Veuillez entrer un texte ou utiliser la commande vocale.")
+
+    # Utiliser le même bouton pour classer le texte, qu'il soit saisi ou vocal                           
+            if st.button("Classer le texte", key="classify_button"):                       
+                if user_input:
+                    category = classify_text(classifier, user_input)
+                    st.write(f"Le texte appartient à la catégorie : **{category}**")
+                else:
+                    st.write("Veuillez entrer un texte ou utiliser la commande vocale.")
         
     #  Afficher la précision du modèle                               
     if st.button("Afficher la précision"):
@@ -329,22 +332,27 @@ elif page == "Chatbot Motrice":
         if "bonjour " in user_input.lower():
             parler("Bonjour ça va. Que voulez-vous? ")
         elif "salut " in user_input.lower():
-            parler("salut toi! comment pourrais-je vous aider ") 
+            parler("salut toi! comment pourrais-je vous aider ")
         elif "heure" in user_input.lower():
             heure = datetime.datetime.now().strftime("%H:%M:%S")
             return f"L'heure actuelle est {current_time()}."
+        elif "fatigué" in user_input.lower():
+            heure = datetime.datetime.now().strftime("%H:%M")
+            parler('il fait'+heure)
         elif "cherche" in user_input.lower():
             query = user_input.lower().replace("cherche", "").strip()
             return search_google(query) 
         elif "youtube" in user_input.lower() and "cherche" in user_input.lower():
             query = user_input.lower().replace("cherche", "").replace("sur youtube", "").strip()
             return search_youtube(query)
-        elif 'mets le tuto de' in  user_input.lower():
-            auteur= user_input.lower().replace('mets le tuto de','')
+        elif 'mets la vidéo  de' in  user_input.lower():
+            auteur= user_input.lower().replace('mets le vidéo de','')
             print(auteur)
             pywhatkit.playonyt(auteur)
         elif "youtube" in user_input.lower():
             return open_youtube()
+        elif "merci" in user_input.lower():
+            parler("merci passez une bonne journée, à la prochaine")
         else:
             return "Je ne suis pas sûr de comprendre. Pouvez-vous reformuler ?"
 
@@ -367,6 +375,7 @@ elif page == "Chatbot Motrice":
         st.sidebar.write("- 'ouvre YouTube'")
         st.sidebar.write("- 'cherche [terme] sur YouTube'")
         st.sidebar.write("- 'cherche [terme] sur Google'")
+        st.sidebar.write("- 'Mercis'")
 
         # Saisie textuelle ou vocale
         user_input = st.text_input("**Entrez votre texte ici ou parlez en appuyant sur le bouton 'Micro'**.")
